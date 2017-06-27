@@ -143,6 +143,22 @@ module RSpec
           end
         end
 
+        exception_class = current_example.try(:exception).try(:all_exceptions).try(:first).try(:class) ||
+                          current_example.try(:exception).try(:class)
+
+        case exception_class.to_s
+        when 'Capybara::Poltergeist::StatusFailError', 'Capybara::Poltergeist::TimeoutError'
+          if verbose_retry?
+            message = "\nSpec::Retry: Restarting Capybara session pool"
+            RSpec.configuration.reporter.message(message)
+          end
+
+          Capybara.send('session_pool').each do |_, session|
+            next unless session.driver.is_a?(Capybara::Poltergeist::Driver)
+            session.driver.restart
+          end
+        end
+
         example.example_group_instance.clear_lets if clear_lets
 
         sleep sleep_interval if sleep_interval.to_i > 0
