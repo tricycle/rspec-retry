@@ -154,11 +154,15 @@ module RSpec
           end
 
           Capybara.send('session_pool').each do |_, session|
-            RSpec.configuration.reporter.message("\n - Restarting Server...")
-            session.driver.server.restart
-            next unless session.driver.is_a?(Capybara::Poltergeist::Driver)
-            RSpec.configuration.reporter.message("\n - Restarting Driver...")
-            session.driver.restart
+            if session.driver.is_a?(Capybara::Poltergeist::Driver)
+              RSpec.configuration.reporter.message("\n - Restarting Server...")
+              session.driver.server.restart
+              RSpec.configuration.reporter.message("\n - Restarting Driver...")
+              session.driver.restart
+            elsif session.driver.is_a?(Capybara::RackTest::Driver)
+              RSpec.configuration.reporter.message("\n - Resetting Driver...")
+              session.driver.reset!
+            end
           end
         end
 
