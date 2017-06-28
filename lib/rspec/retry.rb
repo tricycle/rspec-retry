@@ -149,12 +149,15 @@ module RSpec
         case exception_class.to_s
         when 'Capybara::Poltergeist::StatusFailError', 'Capybara::Poltergeist::TimeoutError'
           if verbose_retry?
-            message = "\nSpec::Retry: Restarting Capybara session pool"
+            message = "\nSpec::Retry: Restarting Capybara session pool:"
             RSpec.configuration.reporter.message(message)
           end
 
           Capybara.send('session_pool').each do |_, session|
+            RSpec.configuration.reporter.message("\n - Restarting Server...")
+            session.driver.server.restart
             next unless session.driver.is_a?(Capybara::Poltergeist::Driver)
+            RSpec.configuration.reporter.message("\n - Restarting Driver...")
             session.driver.restart
           end
         end
